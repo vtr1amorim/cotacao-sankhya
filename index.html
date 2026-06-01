@@ -8,27 +8,28 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
   const firebaseConfig = {
     apiKey: "AIzaSyDIWm8OHj8THUp-R7vYU28MEk609gOepQ4",
     authDomain: "cotacao-c8ccc.firebaseapp.com",
+    databaseURL: "https://cotacao-c8ccc-default-rtdb.firebaseio.com",
     projectId: "cotacao-c8ccc",
     storageBucket: "cotacao-c8ccc.firebasestorage.app",
     messagingSenderId: "683868682801",
     appId: "1:683868682801:web:0d4d79409888e3ac34b310"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const ref = doc(db, "paineis", "cotacao-sankhya");
+  const db = getDatabase(app);
+  const stateRef = ref(db, "paineis/cotacao-sankhya");
 
   window.__firebase = {
     save: async (state) => {
       try {
-        await setDoc(ref, { ...state, __updatedAt: serverTimestamp() }, { merge:false });
+        await set(stateRef, { ...state, __updatedAt: Date.now() });
         return true;
-      } catch (e) { console.error('Firestore save:', e); return false; }
+      } catch (e) { console.error('RTDB save:', e); return false; }
     },
-    listen: (cb) => onSnapshot(ref, (snap) => { if (snap.exists()) cb(snap.data()); }, (err) => console.error('Firestore listen:', err))
+    listen: (cb) => onValue(stateRef, (snap) => { const v = snap.val(); if (v) cb(v); }, (err) => console.error('RTDB listen:', err))
   };
   document.dispatchEvent(new Event('firebase-ready'));
 </script>
@@ -487,7 +488,7 @@ document.addEventListener('firebase-ready', () => {
     setSyncStatus('online');
     // Aplica remoto se for mais novo OU se estado local estiver vazio
     const localTs = state.__updatedAt ? new Date(state.__updatedAt).getTime() : 0;
-    const remoteTs = remote.__updatedAt?.toDate ? remote.__updatedAt.toDate().getTime() : 0;
+    const remoteTs = remote.__updatedAt ? Number(remote.__updatedAt) : 0;
     if (remoteTs >= localTs) {
       applyingRemote = true;
       for (const k in state) delete state[k];
@@ -633,7 +634,7 @@ function refreshKPI(){
     return pp.d < pp.t;
   });
   document.getElementById('kpiPhase').textContent = current ? current.title : '🎉 Tudo concluído!';
-  const t = state.__updatedAt ? (state.__updatedAt.toDate ? state.__updatedAt.toDate() : new Date(state.__updatedAt)) : null;
+  const t = state.__updatedAt ? new Date(Number(state.__updatedAt) || state.__updatedAt) : null;
   const who = state.__updatedBy ? ` por ${state.__updatedBy}` : '';
   document.getElementById('kpiTime').textContent = t ? t.toLocaleString('pt-BR') + who : '—';
 }
