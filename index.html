@@ -107,17 +107,17 @@
         </div>
         <div class="mermaid">
 flowchart TD
-  A1[📝 Requisição]:::box --> A2[💬 WhatsApp / E-mail / Verbal]:::detail
-  A2 --> A3[👥 Equipe de Compras]:::box
-  A3 --> A4[🔎 Fornecedor]:::box
-  A4 --> A5[🌐 Pesquisa em sites + planilhas]:::detail
-  A5 --> A6[🧾 Pedido]:::box
-  A6 --> A7[✍️ Lançado manualmente]:::detail
-  A7 --> A8[📦 Lançamento]:::box
-  A8 --> A9([🏁 FIM]):::end
-  classDef box fill:#fde68a,stroke:#d97706,color:#111,font-weight:bold;
+  A1["📝 Requisição"]:::box --> A2["💬 WhatsApp / E-mail / Verbal"]:::detail
+  A2 --> A3["👥 Equipe de Compras"]:::box
+  A3 --> A4["🔎 Fornecedor"]:::box
+  A4 --> A5["🌐 Pesquisa em sites + planilhas"]:::detail
+  A5 --> A6["🧾 Pedido"]:::box
+  A6 --> A7["✍️ Lançado manualmente"]:::detail
+  A7 --> A8["📦 Lançamento"]:::box
+  A8 --> A9(["🏁 FIM"]):::fim
+  classDef box fill:#fde68a,stroke:#d97706,color:#111;
   classDef detail fill:#fef3c7,stroke:#d97706,color:#111;
-  classDef end fill:#fca5a5,stroke:#b91c1c,color:#111;
+  classDef fim fill:#fca5a5,stroke:#b91c1c,color:#111;
         </div>
         <ul class="text-sm mt-3 space-y-1 text-[color:var(--muted)]">
           <li>⚠️ Comunicação descentralizada e sem rastreio</li>
@@ -135,16 +135,16 @@ flowchart TD
         </div>
         <div class="mermaid">
 flowchart TD
-  B1[📝 Requisição]:::box --> B2[🖥️ Portal Mov. Interna ou Giro]:::detail
-  B2 --> B3[🔎 Fornecedor]:::box
-  B3 --> B4[📤 Dispara por perfil<br/>🌐 Cotação via B2B<br/>⚖️ Seleção por peso<br/>✅ Aprovação do líder]:::detail
-  B4 --> B5[🧾 Pedido]:::box
-  B5 --> B6[⚡ Geração automática]:::detail
-  B6 --> B7[📦 Lançamento]:::box
-  B7 --> B8([🏁 FIM]):::end
-  classDef box fill:#bbf7d0,stroke:#059669,color:#111,font-weight:bold;
+  B1["📝 Requisição"]:::box --> B2["🖥️ Portal Mov. Interna ou Giro"]:::detail
+  B2 --> B3["🔎 Fornecedor"]:::box
+  B3 --> B4["📤 Dispara por perfil / 🌐 Cotação B2B / ⚖️ Seleção por peso / ✅ Aprovação do líder"]:::detail
+  B4 --> B5["🧾 Pedido"]:::box
+  B5 --> B6["⚡ Geração automática"]:::detail
+  B6 --> B7["📦 Lançamento"]:::box
+  B7 --> B8(["🏁 FIM"]):::fim
+  classDef box fill:#bbf7d0,stroke:#059669,color:#111;
   classDef detail fill:#d1fae5,stroke:#059669,color:#111;
-  classDef end fill:#86efac,stroke:#047857,color:#111;
+  classDef fim fill:#86efac,stroke:#047857,color:#111;
         </div>
         <ul class="text-sm mt-3 space-y-1">
           <li>✅ <span class="text-[color:var(--muted)]">Requisição padronizada via Portal</span></li>
