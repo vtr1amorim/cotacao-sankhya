@@ -92,6 +92,96 @@
   </div>
 </header>
 
+<!-- ANTES vs DEPOIS -->
+<section class="max-w-7xl mx-auto px-6 pb-6">
+  <div class="glass rounded-2xl p-5">
+    <h2 class="text-lg font-bold mb-1">🔄 Antes <span class="text-[color:var(--muted)] font-normal">vs</span> Depois da Implantação</h2>
+    <p class="text-sm text-[color:var(--muted)] mb-4">Comparativo do processo de compras: como funciona hoje e como ficará com o módulo de Cotação do Sankhya.</p>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- ANTES -->
+      <div class="rounded-xl border border-[color:var(--line)] bg-[color:var(--card2)]/40 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base">😓 Hoje — Processo Manual</h3>
+          <span class="chip chip-warn">As-Is</span>
+        </div>
+        <div class="mermaid">
+flowchart TD
+  A1[📝 Requisição]:::box --> A2[💬 WhatsApp / E-mail / Verbal]:::detail
+  A2 --> A3[👥 Equipe de Compras]:::box
+  A3 --> A4[🔎 Fornecedor]:::box
+  A4 --> A5[🌐 Pesquisa em sites + planilhas]:::detail
+  A5 --> A6[🧾 Pedido]:::box
+  A6 --> A7[✍️ Lançado manualmente]:::detail
+  A7 --> A8[📦 Lançamento]:::box
+  A8 --> A9([🏁 FIM]):::end
+  classDef box fill:#fde68a,stroke:#d97706,color:#111,font-weight:bold;
+  classDef detail fill:#fef3c7,stroke:#d97706,color:#111;
+  classDef end fill:#fca5a5,stroke:#b91c1c,color:#111;
+        </div>
+        <ul class="text-sm mt-3 space-y-1 text-[color:var(--muted)]">
+          <li>⚠️ Comunicação descentralizada e sem rastreio</li>
+          <li>⚠️ Risco de perder cotações ou esquecer fornecedor</li>
+          <li>⚠️ Lançamento manual = retrabalho e erros</li>
+          <li>⚠️ Difícil comparar histórico e medir economia</li>
+        </ul>
+      </div>
+
+      <!-- DEPOIS -->
+      <div class="rounded-xl border border-emerald-700/40 bg-emerald-900/10 p-4 ring-glow">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-base">🚀 Depois — Sankhya + Portal B2B</h3>
+          <span class="chip chip-ok">To-Be</span>
+        </div>
+        <div class="mermaid">
+flowchart TD
+  B1[📝 Requisição]:::box --> B2[🖥️ Portal Mov. Interna ou Giro]:::detail
+  B2 --> B3[🔎 Fornecedor]:::box
+  B3 --> B4[📤 Dispara por perfil<br/>🌐 Cotação via B2B<br/>⚖️ Seleção por peso<br/>✅ Aprovação do líder]:::detail
+  B4 --> B5[🧾 Pedido]:::box
+  B5 --> B6[⚡ Geração automática]:::detail
+  B6 --> B7[📦 Lançamento]:::box
+  B7 --> B8([🏁 FIM]):::end
+  classDef box fill:#bbf7d0,stroke:#059669,color:#111,font-weight:bold;
+  classDef detail fill:#d1fae5,stroke:#059669,color:#111;
+  classDef end fill:#86efac,stroke:#047857,color:#111;
+        </div>
+        <ul class="text-sm mt-3 space-y-1">
+          <li>✅ <span class="text-[color:var(--muted)]">Requisição padronizada via Portal</span></li>
+          <li>✅ <span class="text-[color:var(--muted)]">Fornecedor responde sozinho no B2B</span></li>
+          <li>✅ <span class="text-[color:var(--muted)]">Melhor fornecedor calculado por critérios</span></li>
+          <li>✅ <span class="text-[color:var(--muted)]">Pedido gerado automaticamente, sem digitação</span></li>
+          <li>✅ <span class="text-[color:var(--muted)]">Rastreabilidade total e KPIs em tempo real</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Ganhos -->
+    <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="rounded-xl p-3 text-center" style="background:linear-gradient(135deg,#0f766e,#0e7490);">
+        <div class="text-2xl">⏱️</div>
+        <div class="text-xs uppercase opacity-80 mt-1">Tempo do ciclo</div>
+        <div class="font-bold mt-1">Reduz drasticamente</div>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);">
+        <div class="text-2xl">💰</div>
+        <div class="text-xs uppercase opacity-80 mt-1">Economia</div>
+        <div class="font-bold mt-1">Mais cotações = melhor preço</div>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:linear-gradient(135deg,#0891b2,#0284c7);">
+        <div class="text-2xl">🎯</div>
+        <div class="text-xs uppercase opacity-80 mt-1">Erros</div>
+        <div class="font-bold mt-1">Quase zero</div>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:linear-gradient(135deg,#db2777,#be185d);">
+        <div class="text-2xl">📊</div>
+        <div class="text-xs uppercase opacity-80 mt-1">Visibilidade</div>
+        <div class="font-bold mt-1">Total e em tempo real</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- MAPA DE FASES -->
 <section class="max-w-7xl mx-auto px-6 pb-6">
   <div class="glass rounded-2xl p-5">
