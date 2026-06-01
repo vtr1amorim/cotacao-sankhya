@@ -6,6 +6,32 @@
 <title>Implantação Cotação Sankhya · Painel</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDIWm8OHj8THUp-R7vYU28MEk609gOepQ4",
+    authDomain: "cotacao-c8ccc.firebaseapp.com",
+    projectId: "cotacao-c8ccc",
+    storageBucket: "cotacao-c8ccc.firebasestorage.app",
+    messagingSenderId: "683868682801",
+    appId: "1:683868682801:web:0d4d79409888e3ac34b310"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const ref = doc(db, "paineis", "cotacao-sankhya");
+
+  window.__firebase = {
+    save: async (state) => {
+      try {
+        await setDoc(ref, { ...state, __updatedAt: serverTimestamp() }, { merge:false });
+        return true;
+      } catch (e) { console.error('Firestore save:', e); return false; }
+    },
+    listen: (cb) => onSnapshot(ref, (snap) => { if (snap.exists()) cb(snap.data()); }, (err) => console.error('Firestore listen:', err))
+  };
+  document.dispatchEvent(new Event('firebase-ready'));
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -61,9 +87,11 @@
         </div>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
+      <span id="syncStatus" class="chip chip-mut" title="Status da sincronização">⚪ conectando…</span>
+      <input id="userName" placeholder="Seu nome" class="bg-transparent border border-[color:var(--line)] rounded-lg px-3 py-1.5 text-sm text-[color:var(--text)] placeholder-[color:var(--muted)] focus:outline-none focus:border-[color:var(--accent)]" />
       <button id="resetBtn" class="btn-ghost text-sm">🗑️ Resetar</button>
-      <button id="exportBtn" class="btn text-sm">💾 Exportar progresso</button>
+      <button id="exportBtn" class="btn text-sm">💾 Exportar</button>
     </div>
   </div>
 
@@ -429,18 +457,55 @@ const TESTS = [
 
 const KEY = 'cotacao_sankhya_progress_v1';
 const state = JSON.parse(localStorage.getItem(KEY) || '{}');
+let remoteReady = false;
+let applyingRemote = false;
+let saveTimer;
 
 function save(){
   try {
     state.__updatedAt = new Date().toISOString();
+    state.__updatedBy = (localStorage.getItem('userName') || 'anônimo');
     localStorage.setItem(KEY, JSON.stringify(state));
     showSaved();
   } catch (err) {
     console.error('Falha ao salvar progresso:', err);
-    alert('Não foi possível salvar o progresso no navegador. Verifique se localStorage está habilitado (não use modo anônimo).');
+    alert('Não foi possível salvar o progresso no navegador.');
   }
   refreshKPI();
+  // Debounce do save remoto pra não gastar quota
+  if (window.__firebase && !applyingRemote) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => window.__firebase.save(state), 400);
+  }
 }
+
+// Ouve mudanças remotas em tempo real
+document.addEventListener('firebase-ready', () => {
+  remoteReady = true;
+  setSyncStatus('connecting');
+  window.__firebase.listen((remote) => {
+    setSyncStatus('online');
+    // Aplica remoto se for mais novo OU se estado local estiver vazio
+    const localTs = state.__updatedAt ? new Date(state.__updatedAt).getTime() : 0;
+    const remoteTs = remote.__updatedAt?.toDate ? remote.__updatedAt.toDate().getTime() : 0;
+    if (remoteTs >= localTs) {
+      applyingRemote = true;
+      for (const k in state) delete state[k];
+      Object.assign(state, remote);
+      // Reaplica nos checkboxes
+      document.querySelectorAll('.check input[type=checkbox]').forEach(inp => {
+        const v = !!state[inp.dataset.k];
+        inp.checked = v;
+        inp.closest('.check')?.classList.toggle('done', v);
+      });
+      refreshKPI();
+      applyingRemote = false;
+    } else {
+      // Local é mais novo -> sobe
+      window.__firebase.save(state);
+    }
+  });
+});
 
 let savedTimer;
 function showSaved(){
@@ -568,14 +633,31 @@ function refreshKPI(){
     return pp.d < pp.t;
   });
   document.getElementById('kpiPhase').textContent = current ? current.title : '🎉 Tudo concluído!';
-  const t = state.__updatedAt ? new Date(state.__updatedAt) : null;
-  document.getElementById('kpiTime').textContent = t ? t.toLocaleString('pt-BR') : '—';
+  const t = state.__updatedAt ? (state.__updatedAt.toDate ? state.__updatedAt.toDate() : new Date(state.__updatedAt)) : null;
+  const who = state.__updatedBy ? ` por ${state.__updatedBy}` : '';
+  document.getElementById('kpiTime').textContent = t ? t.toLocaleString('pt-BR') + who : '—';
 }
 
+function setSyncStatus(s){
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  if (s==='online'){ el.className='chip chip-ok'; el.textContent='🟢 sincronizado'; }
+  else if (s==='connecting'){ el.className='chip chip-info'; el.textContent='🔵 conectando…'; }
+  else { el.className='chip chip-warn'; el.textContent='🟡 offline (só local)'; }
+}
+
+// Campo "Seu nome"
+const nameInput = document.getElementById('userName');
+nameInput.value = localStorage.getItem('userName') || '';
+nameInput.addEventListener('change', () => {
+  localStorage.setItem('userName', nameInput.value.trim());
+});
+
 document.getElementById('resetBtn').addEventListener('click', () => {
-  if (confirm('Apagar todo o progresso salvo neste navegador?')){
+  if (confirm('Apagar todo o progresso compartilhado? Isso afeta TODOS os usuários.')){
     localStorage.removeItem(KEY);
     for (const k in state) delete state[k];
+    if (window.__firebase) window.__firebase.save({});
     renderPhases(); renderParams(); renderTests(); refreshKPI();
   }
 });
@@ -592,6 +674,9 @@ renderPhases();
 renderParams();
 renderTests();
 refreshKPI();
+setSyncStatus('connecting');
+// Se Firebase não carregar em 5s, marca como offline
+setTimeout(() => { if (!remoteReady) setSyncStatus('offline'); }, 5000);
 </script>
 </body>
 </html>
