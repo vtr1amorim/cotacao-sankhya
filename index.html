@@ -257,6 +257,11 @@ sequenceDiagram
   Feito para organizar a implantação · Dados salvos localmente no seu navegador (localStorage)
 </footer>
 
+<!-- Toast de salvamento -->
+<div id="savedToast" class="fixed bottom-6 right-6 z-50 transition-opacity duration-300 opacity-0 chip chip-ok shadow-lg" style="padding:.5rem 1rem;font-size:.875rem;">
+  ✔️ Salvo
+</div>
+
 <script>
 mermaid.initialize({ startOnLoad:true, theme:'dark', securityLevel:'loose' });
 
@@ -409,9 +414,28 @@ const KEY = 'cotacao_sankhya_progress_v1';
 const state = JSON.parse(localStorage.getItem(KEY) || '{}');
 
 function save(){
-  state.__updatedAt = new Date().toISOString();
-  localStorage.setItem(KEY, JSON.stringify(state));
+  try {
+    state.__updatedAt = new Date().toISOString();
+    localStorage.setItem(KEY, JSON.stringify(state));
+    showSaved();
+  } catch (err) {
+    console.error('Falha ao salvar progresso:', err);
+    alert('Não foi possível salvar o progresso no navegador. Verifique se localStorage está habilitado (não use modo anônimo).');
+  }
   refreshKPI();
+}
+
+let savedTimer;
+function showSaved(){
+  const el = document.getElementById('savedToast');
+  if (!el) return;
+  el.classList.remove('opacity-0');
+  el.classList.add('opacity-100');
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(() => {
+    el.classList.remove('opacity-100');
+    el.classList.add('opacity-0');
+  }, 1200);
 }
 
 function taskId(phaseId, group, idx){ return `${phaseId}::${group||'_'}::${idx}`; }
@@ -456,14 +480,17 @@ function renderPhases(){
     root.appendChild(wrap);
   });
 
-  document.querySelectorAll('.check input').forEach(inp => {
-    inp.addEventListener('change', (e) => {
-      state[e.target.dataset.k] = e.target.checked;
-      e.target.closest('.check').classList.toggle('done', e.target.checked);
-      save();
-    });
-  });
 }
+
+// Listener global delegado — funciona pra qualquer checkbox renderizado a qualquer momento
+document.addEventListener('change', (e) => {
+  const inp = e.target;
+  if (!(inp instanceof HTMLInputElement) || inp.type !== 'checkbox' || !inp.dataset.k) return;
+  state[inp.dataset.k] = inp.checked;
+  const lbl = inp.closest('.check');
+  if (lbl) lbl.classList.toggle('done', inp.checked);
+  save();
+});
 
 function taskHTML(pid, group, idx, label){
   const k = taskId(pid, group, idx);
