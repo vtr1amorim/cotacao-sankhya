@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Implantação Cotação Sankhya · Painel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1020; --card:#111933; --card2:#0e1530;
+    --text:#e6ecff; --muted:#9aa6c7; --line:#1f2a4d;
+    --accent:#7c8cff; --accent2:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{ font-family:'Inter',system-ui,sans-serif; }
+  body{ background: radial-gradient(1200px 600px at 10% -10%, #1a225a 0%, transparent 60%), radial-gradient(1000px 500px at 110% 10%, #0e2a4d 0%, transparent 55%), var(--bg); color:var(--text); }
+  .glass{ background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border:1px solid var(--line); backdrop-filter: blur(8px); }
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; border-radius:9999px; font-size:.75rem; font-weight:600; }
+  .chip-ok{ background:rgba(34,197,94,.12); color:#86efac; border:1px solid rgba(34,197,94,.35); }
+  .chip-warn{ background:rgba(245,158,11,.12); color:#fcd34d; border:1px solid rgba(245,158,11,.35); }
+  .chip-info{ background:rgba(124,140,255,.14); color:#c7cffd; border:1px solid rgba(124,140,255,.35); }
+  .chip-mut{ background:rgba(154,166,199,.10); color:var(--muted); border:1px solid rgba(154,166,199,.2); }
+  .phase-card{ transition: all .25s ease; }
+  .phase-card:hover{ transform: translateY(-3px); border-color:#3a4a8a; }
+  .check{ display:flex; align-items:flex-start; gap:.6rem; padding:.55rem .6rem; border-radius:.6rem; cursor:pointer; }
+  .check:hover{ background: rgba(124,140,255,.08); }
+  .check input{ margin-top:.25rem; width:18px; height:18px; accent-color:#7c8cff; cursor:pointer; }
+  .check.done span{ text-decoration: line-through; color:var(--muted); }
+  details > summary{ list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker{ display:none; }
+  .bar{ height:8px; border-radius:9999px; background:#1a234a; overflow:hidden; }
+  .bar > div{ height:100%; background:linear-gradient(90deg,#22d3ee,#7c8cff,#a855f7); transition: width .4s ease; }
+  .mermaid{ background:#0a1130; border:1px solid var(--line); border-radius:.75rem; padding:1rem; }
+  .grad-text{ background:linear-gradient(90deg,#22d3ee,#7c8cff,#a855f7); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .num{ width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; font-weight:700; }
+  .ring-glow{ box-shadow:0 0 0 1px rgba(124,140,255,.35), 0 10px 30px -10px rgba(124,140,255,.4); }
+  .scroll-x{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:.875rem; }
+  th,td{ padding:.6rem .75rem; text-align:left; border-bottom:1px solid var(--line); }
+  th{ color:#c7cffd; font-weight:600; background:rgba(124,140,255,.06); }
+  tr:hover td{ background:rgba(124,140,255,.04); }
+  .pulse{ animation: pulse 2s infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1 } 50%{ opacity:.55 } }
+  .btn{ background:linear-gradient(90deg,#22d3ee,#7c8cff); color:#0b1020; font-weight:700; padding:.55rem 1rem; border-radius:.6rem; }
+  .btn-ghost{ border:1px solid var(--line); color:var(--text); padding:.55rem 1rem; border-radius:.6rem; }
+  .btn-ghost:hover{ border-color:#3a4a8a; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- HEADER -->
+<header class="max-w-7xl mx-auto px-6 pt-10 pb-6">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl ring-glow flex items-center justify-center text-2xl" style="background:linear-gradient(135deg,#22d3ee,#7c8cff);">📊</div>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Implantação <span class="grad-text">Cotação Sankhya</span></h1>
+          <p class="text-sm text-[color:var(--muted)]">Painel interativo de acompanhamento · ERP Sankhya Om</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="resetBtn" class="btn-ghost text-sm">🗑️ Resetar</button>
+      <button id="exportBtn" class="btn text-sm">💾 Exportar progresso</button>
+    </div>
+  </div>
+
+  <!-- KPI BAR -->
+  <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass rounded-2xl p-4">
+      <div class="text-xs text-[color:var(--muted)] uppercase">Progresso global</div>
+      <div class="mt-1 flex items-baseline gap-2"><span id="kpiPct" class="text-3xl font-extrabold grad-text">0%</span><span class="text-xs text-[color:var(--muted)]">concluído</span></div>
+      <div class="bar mt-3"><div id="kpiBar" style="width:0%"></div></div>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <div class="text-xs text-[color:var(--muted)] uppercase">Tarefas</div>
+      <div class="mt-1 text-3xl font-extrabold"><span id="kpiDone">0</span><span class="text-[color:var(--muted)] text-lg">/<span id="kpiTotal">0</span></span></div>
+      <div class="text-xs text-[color:var(--muted)] mt-2">concluídas / total</div>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <div class="text-xs text-[color:var(--muted)] uppercase">Fase atual</div>
+      <div class="mt-1 text-xl font-bold" id="kpiPhase">— iniciar pela Fase 1</div>
+      <div class="text-xs text-[color:var(--muted)] mt-2 pulse">●&nbsp;atualização automática</div>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <div class="text-xs text-[color:var(--muted)] uppercase">Última edição</div>
+      <div class="mt-1 text-xl font-bold" id="kpiTime">—</div>
+      <div class="text-xs text-[color:var(--muted)] mt-2">salvo no navegador</div>
+    </div>
+  </div>
+</header>
+
+<!-- MAPA DE FASES -->
+<section class="max-w-7xl mx-auto px-6 pb-6">
+  <div class="glass rounded-2xl p-5">
+    <h2 class="text-lg font-bold mb-3">🗺️ Mapa das fases</h2>
+    <div class="mermaid">
+flowchart LR
+  F1([🔍 1. Levantamento]):::a --> F2([⚙️ 2. Configuração]):::b
+  F2 --> F3([🧪 3. Testes]):::c
+  F3 --> F4([🎓 4. Treinamento]):::d
+  F4 --> F5([🚀 5. Go-Live]):::e
+  F5 --> F6([📈 6. Pós Go-Live]):::f
+  classDef a fill:#fde68a,stroke:#d97706,color:#111;
+  classDef b fill:#bfdbfe,stroke:#2563eb,color:#111;
+  classDef c fill:#fbcfe8,stroke:#db2777,color:#111;
+  classDef d fill:#c7d2fe,stroke:#4f46e5,color:#111;
+  classDef e fill:#bbf7d0,stroke:#059669,color:#111;
+  classDef f fill:#e9d5ff,stroke:#7c3aed,color:#111;
+    </div>
+  </div>
+</section>
+
+<!-- FASES -->
+<main id="phases" class="max-w-7xl mx-auto px-6 pb-12 grid gap-6"></main>
+
+<!-- CICLO OPERACIONAL -->
+<section class="max-w-7xl mx-auto px-6 pb-12">
+  <div class="glass rounded-2xl p-5">
+    <h2 class="text-lg font-bold mb-3">🔁 Ciclo operacional da Cotação</h2>
+    <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor C as 👤 Comprador
+  participant S as 🖥️ Sankhya Om
+  participant P as 🌐 Portal Cotação
+  actor F as 🏭 Fornecedor
+  C->>S: Cria Cotação (itens + fornecedores)
+  C->>S: Define pesos e critérios
+  C->>S: Clica em "Enviar"
+  S->>P: Disponibiliza cotação
+  S->>F: ✉️ E-mail com link
+  F->>P: Acessa e informa preços
+  P->>S: Sincroniza respostas
+  S->>C: Sugere melhor fornecedor
+  C->>S: Aprova vencedor
+  C->>S: Gera Pedido de Compra
+  S-->>C: ✅ Cotação Fechada
+    </div>
+  </div>
+</section>
+
+<!-- PARÂMETROS -->
+<section class="max-w-7xl mx-auto px-6 pb-12">
+  <div class="glass rounded-2xl p-5">
+    <h2 class="text-lg font-bold mb-3">⚙️ Parâmetros essenciais</h2>
+    <div class="scroll-x">
+      <table>
+        <thead><tr><th>Chave</th><th>Descrição</th><th>Recomendado</th><th>Status</th></tr></thead>
+        <tbody id="paramsTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CENÁRIOS DE TESTE -->
+<section class="max-w-7xl mx-auto px-6 pb-16">
+  <div class="glass rounded-2xl p-5">
+    <h2 class="text-lg font-bold mb-3">🧪 Cenários de teste</h2>
+    <div id="testCases" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+  </div>
+</section>
+
+<footer class="max-w-7xl mx-auto px-6 pb-12 text-center text-sm text-[color:var(--muted)]">
+  Feito para organizar a implantação · Dados salvos localmente no seu navegador (localStorage)
+</footer>
+
+<script>
+mermaid.initialize({ startOnLoad:true, theme:'dark', securityLevel:'loose' });
+
+const PHASES = [
+  {
+    id:'f1', icon:'🔍', title:'Fase 1 — Levantamento', color:'from-amber-400 to-orange-500',
+    desc:'Entender o processo atual e desenhar a solução.',
+    tasks:[
+      'Mapear processo As-Is de compras',
+      'Listar fornecedores ativos e contatos',
+      'Levantar categorias de produtos mais cotados',
+      'Definir modo: Cabeçalho ou Itens',
+      'Definir critérios e pesos (preço, prazo, qualidade…)',
+      'Identificar usuários compradores',
+      'Definir KPIs de sucesso',
+    ]
+  },
+  {
+    id:'f2', icon:'⚙️', title:'Fase 2 — Configuração (Homologação)', color:'from-blue-400 to-indigo-500',
+    desc:'Deixar o ambiente pronto para testes.',
+    groups:[
+      { title:'🔧 Parâmetros do sistema', tasks:[
+        'USAMODCABCOT — Modo Cabeçalho',
+        'ALERTRESPMINCOT — Mínimo de respostas',
+        'RESPCOTCOMPR — Responsável = comprador',
+        'TRABMOECOT — Moedas (se aplicável)',
+        'INFMOTCANCOT — Motivo de cancelamento',
+        'COTDESAPPEDGER — Desaprovar com pedido',
+        'CODPRODGENCOT — Produto repetido',
+        'DECVLRIMPUNTCOT — Decimais de impostos',
+      ]},
+      { title:'📇 Cadastros básicos', tasks:[
+        'Produtos: Unid. Compra e Unidade padrão',
+        'Parceiros: contato com "Envia notificações de cotação?"',
+        'Parceiros: Contato padrão para cotação',
+        'Parceiros: aba Moedas p/ Portal Cot. (se aplicável)',
+        'Parceiros: aba Produtos Cotação',
+        'TOP específica para Pedido de Compra',
+        'Modelo de Nota para cálculo de custos/impostos',
+        'Modelos de E-mail p/ Cotação',
+        'Servidor SMTP configurado e testado',
+        'Usuários compradores marcados',
+      ]},
+      { title:'⭐ Preferências da Cotação', tasks:[
+        'Calcular custos e preço',
+        'Calcular ICMS, ST e IPI',
+        'Exibir último valor unitário da compra',
+        'Modelo de Nota vinculado',
+      ]},
+      { title:'🗂️ Cadastros auxiliares', tasks:[
+        'Motivos de Cancelamento',
+        'Pesos e Critérios padrão',
+        'Central de Certificações (regras)',
+      ]},
+      { title:'🌐 Portal de Cotação Online', tasks:[
+        'Módulo B2B habilitado',
+        'Contatos cadastrados como usuário B2B',
+        'Marcação "Envia notificações" validada',
+        'Link do portal no modelo de e-mail',
+        'Teste de acesso por fornecedor piloto',
+      ]},
+    ]
+  },
+  {
+    id:'f3', icon:'🧪', title:'Fase 3 — Testes', color:'from-pink-400 to-rose-500',
+    desc:'Validar todos os fluxos antes da produção.',
+    tasks:[
+      'Cotação manual com 3 fornecedores → aprovar → gerar pedido',
+      'Cotação online → e-mail → resposta no portal',
+      'Cotação com moeda estrangeira (se aplicável)',
+      'Cancelamento com motivo obrigatório',
+      'Múltiplas datas de entrega + provisão no Portal de Compras',
+      'Cálculo de melhor fornecedor com pesos personalizados',
+      'Calcular custos e impostos (botão)',
+      'Reenvio de e-mail para fila',
+      'Permissões: usuário só "Consultar" não envia/aprova',
+      'Regras da Central de Certificações ativas',
+    ]
+  },
+  {
+    id:'f4', icon:'🎓', title:'Fase 4 — Treinamento', color:'from-violet-400 to-purple-500',
+    desc:'Capacitar usuários e fornecedores piloto.',
+    tasks:[
+      'Treinamento de compradores',
+      'Treinamento de fornecedores piloto',
+      'Roteiro / manual passo a passo',
+      'Vídeo curto (3–5 min)',
+      'FAQ inicial publicado',
+      'Canal de suporte definido',
+    ]
+  },
+  {
+    id:'f5', icon:'🚀', title:'Fase 5 — Go-Live', color:'from-emerald-400 to-teal-500',
+    desc:'Subir para produção com segurança.',
+    tasks:[
+      'Parâmetros aplicados em PROD',
+      'Fornecedor piloto testado no Portal em PROD',
+      'E-mail de cotação chegando (SMTP OK)',
+      'TOP de Pedido de Compra testada',
+      'Modelo de Nota validado',
+      'Pesos e Critérios aprovados por Compras',
+      'Permissões revisadas por perfil',
+      'Regras da Central de Certificações ativas',
+      'Motivos de cancelamento cadastrados',
+      'Treinamento concluído',
+      'Plano de rollback documentado',
+      'Comunicado oficial enviado',
+    ]
+  },
+  {
+    id:'f6', icon:'📈', title:'Fase 6 — Pós Go-Live', color:'from-fuchsia-400 to-pink-500',
+    desc:'Estabilizar, medir e melhorar.',
+    tasks:[
+      'Acompanhamento diário na 1ª semana',
+      'Acompanhamento semanal no 1º mês',
+      'Registro de incidentes / dúvidas',
+      'Ajuste fino de parâmetros e pesos',
+      'Apuração dos KPIs',
+      'Expansão para demais fornecedores',
+      'Retrospectiva do projeto',
+    ]
+  },
+];
+
+const PARAMS = [
+  ['USAMODCABCOT','Utiliza Cotação no Modo Cabeçalho','Ligado'],
+  ['ALERTRESPMINCOT','Mínimo de respostas p/ sugestão de resultado','3'],
+  ['RESPCOTCOMPR','Responsável pela cotação tem que ser comprador?','Ligado'],
+  ['TRABMOECOT','Trabalhar com moedas na cotação','Desligado*'],
+  ['INFMOTCANCOT','Informar motivo de cancelamento','Ligado'],
+  ['COTDESAPPEDGER','Permite desaprovar produto com pedido gerado','Desligado'],
+  ['CODPRODGENCOT','Produto genérico que pode repetir','0'],
+  ['DECVLRIMPUNTCOT','Decimais p/ impostos unitários','2'],
+];
+
+const TESTS = [
+  ['🟢','Manual com 3 fornecedores'],
+  ['🌐','Online via Portal'],
+  ['💱','Moeda estrangeira'],
+  ['❌','Cancelamento com motivo'],
+  ['📅','Múltiplas datas de entrega'],
+  ['⚖️','Melhor fornecedor com pesos'],
+  ['🧮','Calcular custos e impostos'],
+  ['🔁','Reenvio de e-mail'],
+  ['🔐','Permissões (Consultar)'],
+  ['🛡️','Central de Certificações'],
+];
+
+const KEY = 'cotacao_sankhya_progress_v1';
+const state = JSON.parse(localStorage.getItem(KEY) || '{}');
+
+function save(){
+  state.__updatedAt = new Date().toISOString();
+  localStorage.setItem(KEY, JSON.stringify(state));
+  refreshKPI();
+}
+
+function taskId(phaseId, group, idx){ return `${phaseId}::${group||'_'}::${idx}`; }
+
+function renderPhases(){
+  const root = document.getElementById('phases');
+  root.innerHTML = '';
+  PHASES.forEach((p, i) => {
+    const wrap = document.createElement('section');
+    wrap.className = 'glass phase-card rounded-2xl p-5';
+    let inner = `
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="num bg-gradient-to-br ${p.color} text-slate-900">${i+1}</div>
+          <div>
+            <h3 class="text-lg font-bold">${p.icon} ${p.title}</h3>
+            <p class="text-sm text-[color:var(--muted)]">${p.desc}</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-[color:var(--muted)]" id="${p.id}-count">0/0</div>
+          <div class="bar mt-2 w-40"><div id="${p.id}-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="mt-4 grid gap-3">
+    `;
+    if (p.groups){
+      p.groups.forEach((g, gi) => {
+        inner += `<details ${gi===0?'open':''} class="rounded-xl border border-[color:var(--line)] bg-[color:var(--card2)]/40">
+          <summary class="px-4 py-3 flex items-center justify-between">
+            <span class="font-semibold">${g.title}</span>
+            <span class="chip chip-mut">${g.tasks.length} itens</span>
+          </summary>
+          <div class="p-2">${g.tasks.map((t,ti) => taskHTML(p.id, g.title, ti, t)).join('')}</div>
+        </details>`;
+      });
+    } else {
+      inner += `<div>${p.tasks.map((t,ti) => taskHTML(p.id, null, ti, t)).join('')}</div>`;
+    }
+    inner += `</div>`;
+    wrap.innerHTML = inner;
+    root.appendChild(wrap);
+  });
+
+  document.querySelectorAll('.check input').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      state[e.target.dataset.k] = e.target.checked;
+      e.target.closest('.check').classList.toggle('done', e.target.checked);
+      save();
+    });
+  });
+}
+
+function taskHTML(pid, group, idx, label){
+  const k = taskId(pid, group, idx);
+  const checked = !!state[k];
+  return `<label class="check ${checked?'done':''}">
+    <input type="checkbox" data-k="${k}" data-phase="${pid}" ${checked?'checked':''} />
+    <span>${label}</span>
+  </label>`;
+}
+
+function renderParams(){
+  document.getElementById('paramsTable').innerHTML = PARAMS.map(([k,d,r]) => {
+    const key = `param::${k}`;
+    const done = !!state[key];
+    return `<tr>
+      <td><code class="text-[color:var(--accent)] font-semibold">${k}</code></td>
+      <td>${d}</td>
+      <td><span class="chip chip-info">${r}</span></td>
+      <td><label class="check ${done?'done':''}" style="padding:.25rem .5rem"><input type="checkbox" data-k="${key}" data-phase="params" ${done?'checked':''}/><span>${done?'OK':'Pendente'}</span></label></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTests(){
+  document.getElementById('testCases').innerHTML = TESTS.map(([emoji,title], i) => {
+    const k = `test::${i}`;
+    const done = !!state[k];
+    return `<label class="check ${done?'done':''} glass rounded-xl">
+      <input type="checkbox" data-k="${k}" data-phase="tests" ${done?'checked':''}/>
+      <span><span class="text-lg mr-1">${emoji}</span>${title}</span>
+    </label>`;
+  }).join('');
+}
+
+function refreshKPI(){
+  let total=0, done=0;
+  const perPhase = {};
+  document.querySelectorAll('.check input').forEach(inp => {
+    total++; if (inp.checked) done++;
+    const ph = inp.dataset.phase;
+    perPhase[ph] = perPhase[ph] || {t:0,d:0};
+    perPhase[ph].t++; if (inp.checked) perPhase[ph].d++;
+  });
+  const pct = total ? Math.round(done*100/total) : 0;
+  document.getElementById('kpiPct').textContent = pct + '%';
+  document.getElementById('kpiBar').style.width = pct + '%';
+  document.getElementById('kpiDone').textContent = done;
+  document.getElementById('kpiTotal').textContent = total;
+  PHASES.forEach(p => {
+    const pp = perPhase[p.id] || {t:0,d:0};
+    const el = document.getElementById(p.id+'-count');
+    const bar = document.getElementById(p.id+'-bar');
+    if (el) el.textContent = `${pp.d}/${pp.t}`;
+    if (bar) bar.style.width = (pp.t? Math.round(pp.d*100/pp.t):0) + '%';
+  });
+  const current = PHASES.find(p => {
+    const pp = perPhase[p.id] || {t:0,d:0};
+    return pp.d < pp.t;
+  });
+  document.getElementById('kpiPhase').textContent = current ? current.title : '🎉 Tudo concluído!';
+  const t = state.__updatedAt ? new Date(state.__updatedAt) : null;
+  document.getElementById('kpiTime').textContent = t ? t.toLocaleString('pt-BR') : '—';
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('Apagar todo o progresso salvo neste navegador?')){
+    localStorage.removeItem(KEY);
+    for (const k in state) delete state[k];
+    renderPhases(); renderParams(); renderTests(); refreshKPI();
+  }
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'progresso-cotacao-sankhya.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+renderPhases();
+renderParams();
+renderTests();
+refreshKPI();
+</script>
+</body>
+</html>
